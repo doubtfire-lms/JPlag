@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { onErrorCaptured, ref, type Ref } from 'vue'
+import { onErrorCaptured, ref, type Ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { router } from '@/router'
 import { store } from '@/stores/store'
@@ -113,6 +113,20 @@ function navigateToOverview() {
     name: 'OverviewView'
   })
 }
+
+onMounted(() => {
+  // Enable uploading of .jplag files via postMessage
+  // This allows the report viewer to be embedded (eg. in an iframe or popup)
+  // and automatically receive and open a JPlag report sent from the parent window
+  window.addEventListener('message', async (event) => {
+    const { type, file, name } = event.data
+    if (type !== 'jplag-zip' || !file) return
+
+    const zipFile = new File([file], name || 'report.jplag')
+
+    handleFile(zipFile)
+  })
+})
 
 /**
  * Handles a file on drop. It determines the file type and passes it to the corresponding handler.

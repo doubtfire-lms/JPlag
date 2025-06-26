@@ -202,7 +202,7 @@
 <script setup lang="ts">
 import type { Cluster } from '@/model/Cluster'
 import type { ComparisonListElement } from '@/model/ComparisonListElement'
-import { type PropType, watch, computed, ref, type Ref } from 'vue'
+import { type PropType, watch, computed, ref, type Ref, onMounted } from 'vue'
 import { store } from '@/stores/store'
 import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -214,6 +214,7 @@ import { MetricType, metricToolTips } from '@/model/MetricType'
 import NameElement from './NameElement.vue'
 import ComparisonTableFilter from './ComparisonTableFilter.vue'
 import { Column, Direction, type ColumnId } from '@/model/ui/ComparisonSorting'
+import { router } from '@/router'
 
 library.add(faUserGroup)
 
@@ -248,6 +249,37 @@ const displayedComparisons = computed(() => {
 })
 
 const searchString = ref('')
+
+onMounted(() => {
+  // Allow the search filter to be remotely set via postMessage
+  window.addEventListener('message', async (event) => {
+    const { type, filter, autoViewComparison } = event.data
+
+    if (type !== 'set-filter-value' || !filter || typeof filter !== 'string') return
+
+    // Set the value of the search input
+    searchString.value = filter
+
+    // Automatically view the comparison if only one was found in the list
+    if (autoViewComparison) {
+      const comparisons = getFilteredComparisons(
+        getSortedComparisons(Array.from(props.topComparisons))
+      )
+
+      if (comparisons.length == 1) {
+        router.push({
+          name: 'ComparisonView',
+          params: {
+            comparisonFileName: store().getComparisonFileName(
+              comparisons[0].firstSubmissionId,
+              comparisons[0].secondSubmissionId
+            )
+          }
+        })
+      }
+    }
+  })
+})
 
 /**
  * This function gets called when the search bar for the comparison table has been updated.
