@@ -255,7 +255,7 @@ onMounted(() => {
   window.addEventListener('message', async (event) => {
     const { type, filter, autoViewComparison } = event.data
 
-    if (type !== 'set-filter-value' || !filter || typeof filter !== 'string') return
+    if (type !== 'set-search-filter-value' || !filter || typeof filter !== 'string') return
 
     // Set the value of the search input
     searchString.value = filter

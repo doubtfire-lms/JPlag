@@ -120,7 +120,7 @@ onMounted(() => {
   // and automatically receive and open a JPlag report sent from the parent window
   window.addEventListener('message', async (event) => {
     const { type, file, name } = event.data
-    if (type !== 'jplag-zip' || !file) return
+    if (type !== 'upload-jplag-file' || !file) return
 
     const zipFile = new File([file], name || 'report.jplag')
 
