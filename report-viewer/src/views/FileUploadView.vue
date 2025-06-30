@@ -119,12 +119,11 @@ onMounted(() => {
   // This allows the report viewer to be embedded (eg. in an iframe or popup)
   // and automatically receive and open a JPlag report sent from the parent window
   window.addEventListener('message', async (event) => {
-    const { type, file, name } = event.data
-    if (type !== 'upload-jplag-file' || !file) return
-
-    const zipFile = new File([file], name || 'report.jplag')
-
-    handleFile(zipFile)
+    if (event.data.type === 'upload-jplag-file' && event.data.file && event.data.name) {
+      const { file, name } = event.data
+      const zipFile = new File([file], name || 'report.jplag')
+      handleFile(zipFile)
+    }
   })
 })
 

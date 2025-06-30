@@ -253,30 +253,47 @@ const searchString = ref('')
 onMounted(() => {
   // Allow the search filter to be remotely set via postMessage
   window.addEventListener('message', async (event) => {
-    const { type, filter, autoViewComparison } = event.data
+    const data = event.data
 
-    if (type !== 'set-search-filter-value' || !filter || typeof filter !== 'string') return
+    if (data.type === 'set-search-filter-value' && data.filter && typeof data.filter === 'string') {
+      const { filter, autoViewComparison } = data
 
-    // Set the value of the search input
-    searchString.value = filter
+      // Set the value of the search input
+      searchString.value = filter
 
-    // Automatically view the comparison if only one was found in the list
-    if (autoViewComparison) {
-      const comparisons = getFilteredComparisons(
-        getSortedComparisons(Array.from(props.topComparisons))
-      )
+      // Automatically view the comparison if only one was found in the list
+      if (autoViewComparison) {
+        const comparisons = getFilteredComparisons(
+          getSortedComparisons(Array.from(props.topComparisons))
+        )
 
-      if (comparisons.length == 1) {
-        router.push({
-          name: 'ComparisonView',
-          params: {
-            comparisonFileName: store().getComparisonFileName(
-              comparisons[0].firstSubmissionId,
-              comparisons[0].secondSubmissionId
-            )
-          }
-        })
+        if (comparisons.length == 1) {
+          router.push({
+            name: 'ComparisonView',
+            params: {
+              comparisonFileName: store().getComparisonFileName(
+                comparisons[0].firstSubmissionId,
+                comparisons[0].secondSubmissionId
+              )
+            }
+          })
+        }
       }
+    } else if (data.type === 'open-comparison' && data.submissionId1 && data.submissionId2) {
+      const { submissionId1, submissionId2 } = data
+      const comparisonFileName = store().getComparisonFileName(submissionId1, submissionId2)
+
+      if (!comparisonFileName) {
+        console.error(`Unable to find comparison between ${submissionId1} && ${submissionId2}`)
+        return
+      }
+
+      router.push({
+        name: 'ComparisonView',
+        params: {
+          comparisonFileName
+        }
+      })
     }
   })
 })
