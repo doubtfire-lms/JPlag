@@ -295,10 +295,8 @@ onMounted(() => {
           router.push({
             name: 'ComparisonView',
             params: {
-              comparisonFileName: store().getComparisonFileName(
-                comparisons[0].firstSubmissionId,
-                comparisons[0].secondSubmissionId
-              )
+              firstSubmissionId: comparisons[0].firstSubmissionId,
+              secondSubmissionId: comparisons[0].secondSubmissionId
             }
           })
         }
@@ -315,7 +313,8 @@ onMounted(() => {
       router.push({
         name: 'ComparisonView',
         params: {
-          comparisonFileName
+          firstSubmissionId: submissionId1,
+          secondSubmissionId: submissionId2
         }
       })
     }
