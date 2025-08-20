@@ -217,7 +217,7 @@
 <script setup lang="ts">
 import type { Cluster } from '@/model/Cluster'
 import type { ComparisonListElement } from '@/model/ComparisonListElement'
-import { type PropType, watch, computed, ref, type Ref } from 'vue'
+import { type PropType, watch, computed, ref, type Ref, onMounted } from 'vue'
 import { store } from '@/stores/store'
 import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -230,6 +230,7 @@ import { MetricJsonIdentifier } from '@/model/MetricJsonIdentifier'
 import NameElement from './NameElement.vue'
 import ComparisonTableFilter from './ComparisonTableFilter.vue'
 import { Column, Direction, type ColumnId } from '@/model/ui/ComparisonSorting'
+import { router } from '@/router'
 
 library.add(faUserGroup)
 
@@ -272,6 +273,53 @@ const displayedComparisons = computed(() => {
 })
 
 const searchString = ref('')
+
+onMounted(() => {
+  // Allow the search filter to be remotely set via postMessage
+  window.addEventListener('message', async (event) => {
+    const data = event.data
+
+    if (data.type === 'set-search-filter-value' && data.filter && typeof data.filter === 'string') {
+      const { filter, autoViewComparison } = data
+
+      // Set the value of the search input
+      searchString.value = filter
+
+      // Automatically view the comparison if only one was found in the list
+      if (autoViewComparison) {
+        const comparisons = getFilteredComparisons(
+          getSortedComparisons(Array.from(props.topComparisons))
+        )
+
+        if (comparisons.length == 1) {
+          router.push({
+            name: 'ComparisonView',
+            params: {
+              firstSubmissionId: comparisons[0].firstSubmissionId,
+              secondSubmissionId: comparisons[0].secondSubmissionId
+            }
+          })
+        }
+      }
+    } else if (data.type === 'open-comparison' && data.submissionId1 && data.submissionId2) {
+      const { submissionId1, submissionId2 } = data
+      const comparisonFileName = store().getComparisonFileName(submissionId1, submissionId2)
+
+      if (!comparisonFileName) {
+        console.error(`Unable to find comparison between ${submissionId1} && ${submissionId2}`)
+        return
+      }
+
+      router.push({
+        name: 'ComparisonView',
+        params: {
+          firstSubmissionId: submissionId1,
+          secondSubmissionId: submissionId2
+        }
+      })
+    }
+  })
+})
 
 /**
  * This function gets called when the search bar for the comparison table has been updated.
